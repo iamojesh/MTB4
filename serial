@@ -1,0 +1,47 @@
+import tkinter as tk
+import serial
+import threading
+
+# Configure your serial port here
+SERIAL_PORT = "COM3"   # Change to your port (e.g., "/dev/ttyUSB0" on Linux)
+BAUD_RATE = 9600
+
+# Open serial connection
+ser = serial.Serial(SERIAL_PORT, BAUD_RATE, timeout=1)
+
+def send_data():
+    """Send text from entry box to serial port"""
+    data = entry.get()
+    ser.write(data.encode('utf-8'))
+    text_box.insert(tk.END, f"Sent: {data}\n")
+    entry.delete(0, tk.END)
+
+def read_serial():
+    """Continuously read from serial port in background"""
+    while True:
+        if ser.in_waiting > 0:
+            line = ser.readline().decode('utf-8').strip()
+            if line:
+                text_box.insert(tk.END, f"Received: {line}\n")
+
+# Tkinter GUI
+root = tk.Tk()
+root.title("Serial Communication")
+
+frame = tk.Frame(root)
+frame.pack(padx=10, pady=10)
+
+entry = tk.Entry(frame, width=30)
+entry.pack(side=tk.LEFT)
+
+send_button = tk.Button(frame, text="Send", command=send_data)
+send_button.pack(side=tk.LEFT, padx=5)
+
+text_box = tk.Text(root, height=15, width=50)
+text_box.pack(padx=10, pady=10)
+
+# Start background thread for reading serial
+thread = threading.Thread(target=read_serial, daemon=True)
+thread.start()
+
+root.mainloop()
